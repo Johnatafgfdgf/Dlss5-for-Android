@@ -15,6 +15,7 @@ public class MainActivity extends Activity {
     private LinearLayout root;
     private TextView computeResult;
     private TextView upscaleResult;
+    private TextView fp16Result;
 
     private TextView row(String title, String value) {
         TextView v = new TextView(this);
@@ -56,6 +57,17 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void runFp16() {
+        fp16Result.setText("FP16 Compute Test\nExecuting native float16 arithmetic...");
+        try {
+            fp16Result.setText(
+                    "FP16 Compute Test\n" +
+                    NativeVulkan.runFp16Test(getAssets()));
+        } catch (Throwable t) {
+            fp16Result.setText("FP16 Compute Test\nERROR\n" + t);
+        }
+    }
+
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -66,7 +78,7 @@ public class MainActivity extends Activity {
         root.setBackgroundColor(Color.rgb(15, 16, 20));
 
         TextView title = row(
-                "DLSS5 Vulkan Lab",
+                "DLSS5 Vulkan Lab 0.4",
                 "Android ARM64 / native Vulkan compute runtime");
         title.setTextSize(24);
         title.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -92,6 +104,15 @@ public class MainActivity extends Activity {
         compute.setOnClickListener((View v) -> runCompute());
         root.addView(compute);
 
+        fp16Result = row(
+                "FP16 Compute Test",
+                "Uses VK_KHR_shader_float16_int8 and performs real float16 arithmetic in the shader.");
+        root.addView(fp16Result);
+
+        Button fp16 = button("Run native FP16 GPU test");
+        fp16.setOnClickListener((View v) -> runFp16());
+        root.addView(fp16);
+
         upscaleResult = row(
                 "GPU Upscale Test",
                 "Runs an actual 2x RGBA8 bilinear upscaler entirely through Vulkan compute.");
@@ -108,8 +129,9 @@ public class MainActivity extends Activity {
                 "Storage buffers + descriptors: ready\n" +
                 "SPIR-V compute dispatch: implemented\n" +
                 "GPU readback + validation: implemented\n" +
+                "Native FP16 arithmetic path: implemented\n" +
                 "2x image upscale compute pass: implemented\n" +
-                "FP16 tensor path: experimental/next\n" +
+                "Real image import: next\n" +
                 "Temporal reconstruction: not implemented\n" +
                 "Neural model: not implemented"));
 
