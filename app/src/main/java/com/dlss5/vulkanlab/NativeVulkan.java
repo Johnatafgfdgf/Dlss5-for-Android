@@ -9,6 +9,7 @@ public final class NativeVulkan {
 
     public static native String probe();
     public static native String runComputeTest(AssetManager assets);
+    public static native String runUpscaleTest(AssetManager assets);
 
     private NativeVulkan() {}
 }
