@@ -145,7 +145,19 @@ Java_com_dlss5_vulkanlab_NativeVulkan_runFp16Test(
             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES_KHR};
     VkPhysicalDeviceFeatures2 features2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
     features2.pNext = &fp16Features;
-    vkGetPhysicalDeviceFeatures2(pd, &features2);
+
+    auto getFeatures2 = reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
+            vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceFeatures2KHR"));
+    if (!getFeatures2) {
+        getFeatures2 = reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
+                vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceFeatures2"));
+    }
+    if (!getFeatures2) {
+        cleanup();
+        return env->NewStringUTF(
+                "vkGetPhysicalDeviceFeatures2 is unavailable through vkGetInstanceProcAddr.");
+    }
+    getFeatures2(pd, &features2);
 
     if (!fp16Features.shaderFloat16) {
         cleanup();
