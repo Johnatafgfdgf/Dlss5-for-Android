@@ -6,32 +6,69 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
       - uses: android-actions/setup-android@v3
+
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses >/dev/null || true
+
       - name: Install Android components
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
-      - name: Compile compute shader
+        run: |
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.0"
+          sdkmanager "ndk;27.2.12479018"
+          sdkmanager "cmake;3.22.1"
+
+      - name: Install GLSL compiler
         run: |
           sudo apt-get update
           sudo apt-get install -y glslang-tools
+
+      - name: Compile Vulkan shaders
+        run: |
           mkdir -p app/src/main/assets/spv
           glslangValidator -V app/src/main/assets/shaders/tensor_affine.comp -o app/src/main/assets/spv/tensor_affine.spv
           glslangValidator -V app/src/main/assets/shaders/clear_view.comp -o app/src/main/assets/spv/clear_view.spv
-          glslangValidator -V app/src/main/assets/shaders/compute_test.comp -o app/src/main/assets/spv/compute_test.spv\n          glslangValidator -V app/src/main/assets/shaders/upscale_bilinear.comp -o app/src/main/assets/spv/upscale_bilinear.spv
+          glslangValidator -V app/src/main/assets/shaders/compute_test.comp -o app/src/main/assets/spv/compute_test.spv
+          glslangValidator -V app/src/main/assets/shaders/upscale_bilinear.comp -o app/src/main/assets/spv/upscale_bilinear.spv
+
       - name: Build debug APK
-        run: gradle :app:assembleDebug
+        run: gradle --stacktrace :app:assembleDebug
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk DLSS5VulkanLab-debug.apk
+
       - uses: actions/upload-artifact@v4
         with:
           name: DLSS5VulkanLab-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: DLSS5VulkanLab-debug.apk
+          if-no-files-found: error
+
+      - name: Publish APK release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Android Development Build ${{ github.run_number }}
+          body: |
+            Experimental Android ARM64 Vulkan build.
+            This is not NVIDIA DLSS 5; it is the independent Vulkan compute/upscaling runtime under development.
+          files: DLSS5VulkanLab-debug.apk
