@@ -1,0 +1,46 @@
+#version 450
+layout(local_size_x=8, local_size_y=8, local_size_z=1) in;
+
+layout(set=0, binding=0) readonly buffer SrcBuffer {
+    uint src[];
+};
+
+layout(set=0, binding=1) writeonly buffer DstBuffer {
+    uint dst[];
+};
+
+layout(push_constant) uniform Params {
+    uint srcWidth;
+    uint srcHeight;
+    uint dstWidth;
+    uint dstHeight;
+} pc;
+
+vec4 loadPixel(ivec2 p) {
+    p.x = clamp(p.x, 0, int(pc.srcWidth) - 1);
+    p.y = clamp(p.y, 0, int(pc.srcHeight) - 1);
+    return unpackUnorm4x8(src[uint(p.y) * pc.srcWidth + uint(p.x)]);
+}
+
+void main() {
+    uvec2 gid = gl_GlobalInvocationID.xy;
+    if (gid.x >= pc.dstWidth || gid.y >= pc.dstHeight) return;
+
+    vec2 scale = vec2(pc.srcWidth, pc.srcHeight) / vec2(pc.dstWidth, pc.dstHeight);
+    vec2 srcPos = (vec2(gid) + vec2(0.5)) * scale - vec2(0.5);
+
+    ivec2 p0 = ivec2(floor(srcPos));
+    ivec2 p1 = p0 + ivec2(1);
+    vec2 f = fract(srcPos);
+
+    vec4 c00 = loadPixel(ivec2(p0.x, p0.y));
+    vec4 c10 = loadPixel(ivec2(p1.x, p0.y));
+    vec4 c01 = loadPixel(ivec2(p0.x, p1.y));
+    vec4 c11 = loadPixel(ivec2(p1.x, p1.y));
+
+    vec4 top = mix(c00, c10, f.x);
+    vec4 bottom = mix(c01, c11, f.x);
+    vec4 color = mix(top, bottom, f.y);
+
+    dst[gid.y * pc.dstWidth + gid.x] = packUnorm4x8(clamp(color, 0.0, 1.0));
+}
