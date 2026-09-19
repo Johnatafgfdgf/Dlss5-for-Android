@@ -28,6 +28,7 @@ jobs:
           mkdir -p app/src/main/assets/spv
           glslangValidator -V app/src/main/assets/shaders/tensor_affine.comp -o app/src/main/assets/spv/tensor_affine.spv
           glslangValidator -V app/src/main/assets/shaders/clear_view.comp -o app/src/main/assets/spv/clear_view.spv
+          glslangValidator -V app/src/main/assets/shaders/compute_test.comp -o app/src/main/assets/spv/compute_test.spv
       - name: Build debug APK
         run: gradle :app:assembleDebug
       - uses: actions/upload-artifact@v4
