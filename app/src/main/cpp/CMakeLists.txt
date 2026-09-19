@@ -5,7 +5,8 @@ add_library(
         dlss5vulkanlab
         SHARED
         native-lib.cpp
-        upscale.cpp)
+        upscale.cpp
+        fp16.cpp)
 
 find_library(log_lib log)
 find_library(android_lib android)
