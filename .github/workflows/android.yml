@@ -51,6 +51,7 @@ jobs:
           glslangValidator -V app/src/main/assets/shaders/clear_view.comp -o app/src/main/assets/spv/clear_view.spv
           glslangValidator -V app/src/main/assets/shaders/compute_test.comp -o app/src/main/assets/spv/compute_test.spv
           glslangValidator -V app/src/main/assets/shaders/upscale_bilinear.comp -o app/src/main/assets/spv/upscale_bilinear.spv
+          glslangValidator -V app/src/main/assets/shaders/fp16_affine.comp -o app/src/main/assets/spv/fp16_affine.spv
 
       - name: Build debug APK
         run: gradle --stacktrace :app:assembleDebug
@@ -72,5 +73,5 @@ jobs:
           name: Android Development Build ${{ github.run_number }}
           body: |
             Experimental Android ARM64 Vulkan build.
-            This is not NVIDIA DLSS 5; it is the independent Vulkan compute/upscaling runtime under development.
+            Includes Vulkan compute, native FP16 validation and GPU upscaling.
           files: DLSS5VulkanLab-debug.apk
