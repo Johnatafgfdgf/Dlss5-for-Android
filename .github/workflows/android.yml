@@ -15,9 +15,19 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Install Android components
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+      - name: Compile compute shader
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
+          mkdir -p app/src/main/assets/spv
+          glslangValidator -V app/src/main/assets/shaders/tensor_affine.comp -o app/src/main/assets/spv/tensor_affine.spv
+          glslangValidator -V app/src/main/assets/shaders/clear_view.comp -o app/src/main/assets/spv/clear_view.spv
       - name: Build debug APK
         run: gradle :app:assembleDebug
       - uses: actions/upload-artifact@v4
