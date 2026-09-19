@@ -14,6 +14,7 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
     private LinearLayout root;
     private TextView computeResult;
+    private TextView upscaleResult;
 
     private TextView row(String title, String value) {
         TextView v = new TextView(this);
@@ -36,10 +37,22 @@ public class MainActivity extends Activity {
     private void runCompute() {
         computeResult.setText("GPU Compute Test\nExecuting Vulkan vkCmdDispatch()...");
         try {
-            String result = NativeVulkan.runComputeTest(getAssets());
-            computeResult.setText("GPU Compute Test\n" + result);
+            computeResult.setText(
+                    "GPU Compute Test\n" +
+                    NativeVulkan.runComputeTest(getAssets()));
         } catch (Throwable t) {
             computeResult.setText("GPU Compute Test\nERROR\n" + t);
+        }
+    }
+
+    private void runUpscale() {
+        upscaleResult.setText("GPU Upscale Test\nProcessing 32x32 -> 64x64 on Vulkan...");
+        try {
+            upscaleResult.setText(
+                    "GPU Upscale Test\n" +
+                    NativeVulkan.runUpscaleTest(getAssets()));
+        } catch (Throwable t) {
+            upscaleResult.setText("GPU Upscale Test\nERROR\n" + t);
         }
     }
 
@@ -72,22 +85,33 @@ public class MainActivity extends Activity {
 
         computeResult = row(
                 "GPU Compute Test",
-                "Press the button to execute a SPIR-V compute shader on the phone GPU.");
+                "Executes a SPIR-V shader and validates 256 values read back from the GPU.");
         root.addView(computeResult);
 
-        Button run = button("Run real Vulkan compute test");
-        run.setOnClickListener((View v) -> runCompute());
-        root.addView(run);
+        Button compute = button("Run Vulkan compute validation");
+        compute.setOnClickListener((View v) -> runCompute());
+        root.addView(compute);
+
+        upscaleResult = row(
+                "GPU Upscale Test",
+                "Runs an actual 2x RGBA8 bilinear upscaler entirely through Vulkan compute.");
+        root.addView(upscaleResult);
+
+        Button upscale = button("Run 2x GPU upscaler");
+        upscale.setOnClickListener((View v) -> runUpscale());
+        root.addView(upscale);
 
         root.addView(row(
-                "Pipeline status",
+                "Runtime pipeline",
                 "ARM64 JNI: ready\n" +
-                "Vulkan device/queue: ready\n" +
-                "Storage buffers: ready\n" +
+                "Vulkan GPU/device/queue: ready\n" +
+                "Storage buffers + descriptors: ready\n" +
                 "SPIR-V compute dispatch: implemented\n" +
-                "Result readback/validation: implemented\n" +
-                "Image upscaler: next stage\n" +
-                "Temporal reconstruction: not implemented"));
+                "GPU readback + validation: implemented\n" +
+                "2x image upscale compute pass: implemented\n" +
+                "FP16 tensor path: experimental/next\n" +
+                "Temporal reconstruction: not implemented\n" +
+                "Neural model: not implemented"));
 
         ScrollView scroll = new ScrollView(this);
         scroll.addView(root);
