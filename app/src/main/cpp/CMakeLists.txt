@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(dlss5vulkanlab)
 
-add_library(dlss5vulkanlab SHARED native-lib.cpp)
+add_library(
+        dlss5vulkanlab
+        SHARED
+        native-lib.cpp
+        upscale.cpp)
 
 find_library(log_lib log)
 find_library(android_lib android)
